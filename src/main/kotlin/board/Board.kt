@@ -49,9 +49,9 @@ class Board(val length: Int, val width: Int) {
         currentCell.removeInvalidCandidate(validCandidate)
         print(this)
 
-        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
-            addPendingCollapse(coordinate)
-        }
+//        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
+//            addPendingCollapse(coordinate)
+//        }
     }
 
     fun getCell(coordinate: Coordinate): Cell? {
@@ -62,6 +62,7 @@ class Board(val length: Int, val width: Int) {
     }
 
     fun printRegion(coordinate: Coordinate) {
+        println("Printing region around $coordinate")
         val cValue = "[$coordinate] ${getCell(coordinate) ?: "?"}"
         val nValue = "[${coordinate.getNorth()}] ${getCell(coordinate.getNorth()) ?: "?"}"
         val wValue = "[${coordinate.getWest()}] ${getCell(coordinate.getWest()) ?: "?"}"
@@ -93,13 +94,12 @@ class Board(val length: Int, val width: Int) {
             printRegion(coordinate)
 //            Add to visited
             addVisitedCoordinate(coordinate)
-
         }
     }
 
     fun executeCollapse() {
         var count = 0
-        while (count < 3) {
+        while (count < 20) {
             val x = (0 until length).random()
             val y = (0 until width).random()
             val coordinate = Coordinate(x, y)
@@ -120,7 +120,7 @@ class Board(val length: Int, val width: Int) {
         board.forEachIndexed { i, column ->
             result += "[ "
             column.forEachIndexed { j, cell ->
-                result += "[$i,$j] $cell "
+                result += "$cell | "
             }
             result += "]\n"
         }

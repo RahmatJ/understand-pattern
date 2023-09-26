@@ -20,7 +20,9 @@ fun main(args: Array<String>) {
     Pattern.readPattern(pattern)
     println(Cell.getCellData())
 
-    val board: Board = Board(length = 10, width = 20)
+    val board: Board = Board(length = 5, width = 5)
     board.setPattern(Cell.getCellData())
     board.executeCollapse()
+
+    println(board)
 }

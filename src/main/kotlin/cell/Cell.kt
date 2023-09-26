@@ -9,11 +9,10 @@ class Cell() {
     }
 
     fun removeInvalidCandidate(validCandidate: MutableSet<String>) {
-        println("Before: $candidateId")
-        println("Removing except: $validCandidate")
-        this.candidateId.removeIf { x -> !validCandidate.contains(x) }
-        println("Removed ...")
-        println("After: $candidateId")
+//        instead of removing, try to create new array and set candidate with it
+        val newCandidate = this.candidateId.filter { validCandidate.contains(it) }.toMutableSet()
+        println(newCandidate)
+        setCandidateId(newCandidate)
     }
 
     fun getCandidateId(): MutableSet<String> {
@@ -28,6 +27,9 @@ class Cell() {
         var result = ""
         candidateId.forEach {
             result += "$it "
+        }
+        if (candidateId.size < baseCellProbability.size) {
+            result += "_ ".repeat(baseCellProbability.size - candidateId.size)
         }
         return result
     }
