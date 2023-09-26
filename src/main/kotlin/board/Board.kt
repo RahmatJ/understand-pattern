@@ -16,10 +16,11 @@ class Board(val length: Int, val width: Int) {
 
     private fun initiateBoard(): MutableList<MutableList<Cell>> {
         val result = mutableListOf<MutableList<Cell>>()
-        for (i in 0 until length) {
+        for (x in 0 until length) {
             val column = mutableListOf<Cell>()
-            for (j in 0 until width) {
+            for (y in 0 until width) {
                 column.add(Cell())
+                addLowestEntropyCoordinate(Coordinate(x, y))
             }
             result.add(column)
         }
@@ -40,18 +41,18 @@ class Board(val length: Int, val width: Int) {
     }
 
     fun collapseSurrounding(coordinate: Coordinate, validCandidate: MutableSet<String>) {
-//        TODO(Rahmat): fix this logic, should only remove one cell, but now it replace whole board
 //        Check coordinate exist
         if (!board.indices.contains(coordinate.x) || !board[1].indices.contains(coordinate.y)) {
             return
         }
         val currentCell = board[coordinate.x][coordinate.y]
         currentCell.removeInvalidCandidate(validCandidate)
-        print(this)
 
-//        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
-//            addPendingCollapse(coordinate)
-//        }
+        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
+            addPendingCollapse(coordinate)
+        }
+
+        println(this)
     }
 
     fun getCell(coordinate: Coordinate): Cell? {
@@ -75,34 +76,68 @@ class Board(val length: Int, val width: Int) {
         )
     }
 
+    fun recalculateEntropy() {
+        println("Recalculating Entropy...")
+        setLowestEntropy(1.0)
+        board.forEachIndexed { x, data ->
+            data.forEachIndexed innerLoop@{ y, cell ->
+                if (cell.getCandidateId().size == Cell.getBaseCellProbability().size) {
+                    return@innerLoop
+                }
+                val coordinate = Coordinate(x, y)
+                if (visited.contains(coordinate)) {
+                    return@innerLoop
+                }
+                val cellEntropy = cell.getEntropy()
+                if (cellEntropy < lowestEntropy) {
+                    setLowestEntropy(cellEntropy)
+                    setLowestEntropyCoordinate(mutableSetOf(coordinate))
+                    return@innerLoop
+                }
+                if (cellEntropy == lowestEntropy) {
+                    addLowestEntropyCoordinate(coordinate)
+                }
+            }
+        }
+        println("LowestEntropy: $lowestEntropy")
+        println("LowestEntropyCell: $arrayOfLowestEntropy")
+    }
+
     fun collapse() {
         while (pendingCollapse.isNotEmpty()) {
             val coordinate = popPendingCollapse()
             val cell = board[coordinate.x][coordinate.y]
             val pickSingleValue: String = cell.getCandidateId().random()
             cell.setCandidateId(mutableSetOf(pickSingleValue))
-            printRegion(coordinate)
 
 //        Get Valid Pattern
             val dataCell: DataCell = pattern.find { it.id == pickSingleValue } ?: throw Exception("DataCell not found")
 
+            println("Collapsing North... ")
             collapseSurrounding(coordinate.getNorth(), dataCell.northSide)
+            println("Collapsing North... Done !!!")
+            println("Collapsing East...")
             collapseSurrounding(coordinate.getEast(), dataCell.eastSide)
+            println("Collapsing East... Done !!!")
+            println("Collapsing South...")
             collapseSurrounding(coordinate.getSouth(), dataCell.southSide)
+            println("Collapsing South... Done !!!")
+            println("Collapsing West...")
             collapseSurrounding(coordinate.getWest(), dataCell.westSide)
-
-            printRegion(coordinate)
+            println("Collapsing West... Done !!!")
 //            Add to visited
             addVisitedCoordinate(coordinate)
         }
+        recalculateEntropy()
     }
 
     fun executeCollapse() {
         var count = 0
-        while (count < 20) {
-            val x = (0 until length).random()
-            val y = (0 until width).random()
-            val coordinate = Coordinate(x, y)
+
+        while (arrayOfLowestEntropy.size > 0) {
+            println("Count: $count")
+            val coordinate = arrayOfLowestEntropy.random()
+            arrayOfLowestEntropy.remove(coordinate)
 
             if (pendingCollapse.contains(coordinate)) {
                 continue
@@ -163,6 +198,32 @@ class Board(val length: Int, val width: Int) {
         fun addPendingCollapse(coordinate: Coordinate) {
             pendingCollapse.add(coordinate)
             println(">> Added $coordinate to pending collapse ")
+        }
+
+        @JvmStatic
+        private var lowestEntropy: Double = 1.0
+
+        fun setLowestEntropy(entropy: Double) {
+            lowestEntropy = entropy
+        }
+
+        fun getLowestEntropy(): Double {
+            return lowestEntropy
+        }
+
+        @JvmStatic
+        private var arrayOfLowestEntropy: MutableSet<Coordinate> = mutableSetOf()
+
+        fun removeLowestEntropyCoordinate(coordinate: Coordinate) {
+            arrayOfLowestEntropy.remove(coordinate)
+        }
+
+        fun addLowestEntropyCoordinate(coordinate: Coordinate) {
+            arrayOfLowestEntropy.add(coordinate)
+        }
+
+        fun setLowestEntropyCoordinate(coordinates: MutableSet<Coordinate>) {
+            arrayOfLowestEntropy = coordinates
         }
     }
 }

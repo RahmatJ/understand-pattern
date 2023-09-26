@@ -3,9 +3,10 @@ package cell
 class Cell() {
 
     private var candidateId: MutableSet<String> = mutableSetOf<String>()
+    private var entropy: Double = 1.0
 
     init {
-        candidateId = baseCellProbability
+        setCandidateId(baseCellProbability)
     }
 
     fun removeInvalidCandidate(validCandidate: MutableSet<String>) {
@@ -21,6 +22,15 @@ class Cell() {
 
     fun setCandidateId(newCandidate: MutableSet<String>) {
         this.candidateId = newCandidate
+        this.entropy = calculateEntropy()
+    }
+
+    private fun calculateEntropy(): Double {
+        return candidateId.size.toDouble() / baseCellProbability.size.toDouble()
+    }
+
+    fun getEntropy(): Double {
+        return this.entropy
     }
 
     override fun toString(): String {
@@ -41,6 +51,10 @@ class Cell() {
 
         @JvmStatic
         private var baseCellProbability: MutableSet<String> = mutableSetOf<String>()
+
+        fun getBaseCellProbability(): MutableSet<String> {
+            return baseCellProbability
+        }
 
         fun addCellData(cell: DataCell) {
             if (cellData.find { it.id == cell.id } == null) {
