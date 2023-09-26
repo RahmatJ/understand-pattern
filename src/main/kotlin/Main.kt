@@ -1,8 +1,15 @@
 import board.Board
 import cell.Cell
 import pattern.Pattern
+import reader.Reader
 
 fun main(args: Array<String>) {
+    val filePath = "resources/data/pattern.txt"
+    println(filePath)
+    val readFile = Reader.readFile("data/pattern.txt")
+
+//    TODO(Rahmat): Need to create readable pattern from input file
+
     val pattern = mutableListOf<Array<String>>()
     pattern.add(arrayOf("4", "4", "4", "4", "4", "4", "2", "2", "3", "3"))
     pattern.add(arrayOf("0", "0", "0", "0", "0", "0", "0", "0", "1", "3"))
