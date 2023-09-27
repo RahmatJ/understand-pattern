@@ -27,6 +27,13 @@ class Board(val length: Int, val width: Int) {
         return result
     }
 
+    private fun resetBoard() {
+        resetLowestEntropyCoordinate()
+        setLowestEntropy(99.0)
+        board = initiateBoard()
+        resetVisitedCoordinate()
+    }
+
     fun setPattern(pattern: Set<DataCell>) {
         this.pattern = pattern
     }
@@ -36,25 +43,27 @@ class Board(val length: Int, val width: Int) {
         println(">> Added $coordinate to visited cell")
     }
 
+    fun resetVisitedCoordinate() {
+        visited = mutableSetOf()
+    }
+
     fun getVisitedCoordinate(): MutableSet<Coordinate> {
         return this.visited
     }
 
-    fun collapseSurrounding(coordinate: Coordinate, validCandidate: MutableSet<String>) {
+    fun collapseSurrounding(coordinate: Coordinate, validCandidate: MutableSet<String>): Boolean {
 //        Check coordinate exist
         if (!board.indices.contains(coordinate.x) || !board[1].indices.contains(coordinate.y)) {
-            return
+            return false
         }
 
         val currentCell = board[coordinate.x][coordinate.y]
 
         currentCell.removeInvalidCandidate(validCandidate)
+//        TODO(Rahmat): Think about how to do backtrack for this case
         if (currentCell.getCandidateId().isEmpty()) {
-            currentCell.setCandidateId(validCandidate)
-            if (visited.contains(coordinate)) {
-                println("We'll re-visit this place")
-                visited.remove(coordinate)
-            }
+//                let's reset board when we found empty element
+            return true
         }
 
 //        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
@@ -62,6 +71,7 @@ class Board(val length: Int, val width: Int) {
 //        }
 
         println(this)
+        return false
     }
 
     fun getCell(coordinate: Coordinate): Cell? {
@@ -90,9 +100,9 @@ class Board(val length: Int, val width: Int) {
         setLowestEntropy(1.0)
         board.forEachIndexed { x, data ->
             data.forEachIndexed innerLoop@{ y, cell ->
-                if (cell.getCandidateId().size == Cell.getBaseCellProbability().size) {
-                    return@innerLoop
-                }
+//                if (cell.getCandidateId().size == Cell.getBaseCellProbability().size) {
+//                    return@innerLoop
+//                }
                 val coordinate = Coordinate(x, y)
                 if (visited.contains(coordinate)) {
                     return@innerLoop
@@ -113,31 +123,70 @@ class Board(val length: Int, val width: Int) {
     }
 
     fun collapse() {
+        var shouldRecalculate = true
         while (pendingCollapse.isNotEmpty()) {
             val coordinate = popPendingCollapse()
             val cell = board[coordinate.x][coordinate.y]
+            /*            TODO(Rahmat): Should we store random in somewhere else as baseline of backtrack, might be using stack
+                        store current coordinate, possible solution, visited value
+                        if all visited value,visited, then pop new level of stack
+                        if pop new, should delete also from visited array
+            */
             val pickSingleValue: String = cell.getCandidateId().random()
+            /* in here we should push new level of stack or update the top
+               if top stack == coordinate, that means we reach contradict, and should pick other data
+            */
             cell.setCandidateId(mutableSetOf(pickSingleValue))
 
 //        Get Valid Pattern
             val dataCell: DataCell = pattern.find { it.id == pickSingleValue } ?: throw Exception("DataCell not found")
             println("Center: ${cell.getCandidateId().elementAt(0)}")
+            var shouldReset: Boolean = false
             println("Collapsing North... ")
-            collapseSurrounding(coordinate.getNorth(), dataCell.northSide)
+            shouldReset = collapseSurrounding(coordinate.getNorth(), dataCell.northSide)
+            if (shouldReset) {
+                println("Resetting the board !!! ")
+                resetBoard()
+                shouldRecalculate = false
+                return
+            }
             println("Collapsing North... Done !!!")
             println("Collapsing East...")
-            collapseSurrounding(coordinate.getEast(), dataCell.eastSide)
+            shouldReset = collapseSurrounding(coordinate.getEast(), dataCell.eastSide)
+            if (shouldReset) {
+                println("Resetting the board !!! ")
+                resetBoard()
+                shouldRecalculate = false
+                return
+            }
             println("Collapsing East... Done !!!")
             println("Collapsing South...")
-            collapseSurrounding(coordinate.getSouth(), dataCell.southSide)
+            shouldReset = collapseSurrounding(coordinate.getSouth(), dataCell.southSide)
+            if (shouldReset) {
+                println("Resetting the board !!! ")
+                resetBoard()
+                shouldRecalculate = false
+                return
+            }
             println("Collapsing South... Done !!!")
             println("Collapsing West...")
-            collapseSurrounding(coordinate.getWest(), dataCell.westSide)
+            shouldReset = collapseSurrounding(coordinate.getWest(), dataCell.westSide)
+            if (shouldReset) {
+                println("Resetting the board !!! ")
+                resetBoard()
+                shouldRecalculate = false
+                return
+            }
             println("Collapsing West... Done !!!")
+
+
 //            Add to visited
             addVisitedCoordinate(coordinate)
         }
-        recalculateEntropy()
+        if (shouldRecalculate) {
+            recalculateEntropy()
+        }
+
     }
 
     fun executeCollapse() {
@@ -237,6 +286,10 @@ class Board(val length: Int, val width: Int) {
 
         fun removeLowestEntropyCoordinate(coordinate: Coordinate) {
             arrayOfLowestEntropy.remove(coordinate)
+        }
+
+        fun resetLowestEntropyCoordinate() {
+            arrayOfLowestEntropy = mutableSetOf()
         }
 
         fun addLowestEntropyCoordinate(coordinate: Coordinate) {
