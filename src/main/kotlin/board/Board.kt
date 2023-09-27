@@ -45,6 +45,11 @@ class Board(val length: Int, val width: Int) {
         if (!board.indices.contains(coordinate.x) || !board[1].indices.contains(coordinate.y)) {
             return
         }
+//        TODO(Rahmat): Troubleshoot why this happened
+        if (visited.contains(coordinate)) {
+            println("HEIII, WE FOUND Thing that already found before")
+            throw Exception("Already Visited")
+        }
         val currentCell = board[coordinate.x][coordinate.y]
         currentCell.removeInvalidCandidate(validCandidate)
 
@@ -148,6 +153,18 @@ class Board(val length: Int, val width: Int) {
 
             count++
         }
+    }
+
+    fun getResult() {
+        var result = ""
+        board.forEach { data ->
+            data.forEach { cell ->
+                result += cell.getCandidateId().elementAt(0)
+            }
+            result += "\n"
+        }
+
+        print(result)
     }
 
     override fun toString(): String {
