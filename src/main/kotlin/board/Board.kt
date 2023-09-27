@@ -45,17 +45,21 @@ class Board(val length: Int, val width: Int) {
         if (!board.indices.contains(coordinate.x) || !board[1].indices.contains(coordinate.y)) {
             return
         }
-//        TODO(Rahmat): Troubleshoot why this happened
-        if (visited.contains(coordinate)) {
-            println("HEIII, WE FOUND Thing that already found before")
-            throw Exception("Already Visited")
-        }
-        val currentCell = board[coordinate.x][coordinate.y]
-        currentCell.removeInvalidCandidate(validCandidate)
 
-        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
-            addPendingCollapse(coordinate)
+        val currentCell = board[coordinate.x][coordinate.y]
+
+        currentCell.removeInvalidCandidate(validCandidate)
+        if (currentCell.getCandidateId().isEmpty()) {
+            currentCell.setCandidateId(validCandidate)
+            if (visited.contains(coordinate)) {
+                println("We'll re-visit this place")
+                visited.remove(coordinate)
+            }
         }
+
+//        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
+//            addPendingCollapse(coordinate)
+//        }
 
         println(this)
     }
@@ -117,7 +121,7 @@ class Board(val length: Int, val width: Int) {
 
 //        Get Valid Pattern
             val dataCell: DataCell = pattern.find { it.id == pickSingleValue } ?: throw Exception("DataCell not found")
-
+            println("Center: ${cell.getCandidateId().elementAt(0)}")
             println("Collapsing North... ")
             collapseSurrounding(coordinate.getNorth(), dataCell.northSide)
             println("Collapsing North... Done !!!")

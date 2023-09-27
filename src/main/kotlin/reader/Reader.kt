@@ -11,9 +11,13 @@ class Reader {
             val inputString = inputFile.bufferedReader().use { it.readText() }
             val splitted = inputString.split("\n")
             val result = mutableListOf<Array<String>>()
-            splitted.forEach {
+            splitted.forEach { it ->
                 println(it)
-                val splitByChar = it.split("").toTypedArray()
+                val splitByChar = it.split("").filter { it != "" }.toTypedArray()
+                splitByChar.forEachIndexed { i, data ->
+                    print("$i $data ")
+                }
+                println("Length: ${splitByChar.size}")
                 result.add(splitByChar)
             }
             return result

@@ -25,6 +25,10 @@ class Cell() {
         this.entropy = calculateEntropy()
     }
 
+    fun resetCandidateId() {
+        setCandidateId(baseCellProbability)
+    }
+
     private fun calculateEntropy(): Double {
         return candidateId.size.toDouble() / baseCellProbability.size.toDouble()
     }

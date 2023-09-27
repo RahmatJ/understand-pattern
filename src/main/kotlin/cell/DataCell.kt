@@ -7,11 +7,11 @@ data class DataCell(val id: String) {
     var westSide: MutableSet<String> = mutableSetOf<String>()
 
     private fun sideToString(side: MutableSet<String>, name: String): String {
-        var result = "$name: [ "
+        var result = "$name: ["
         side.forEach {
-            result += "$it "
+            result += it
         }
-        result += "] "
+        result += "]"
         return result
     }
 
