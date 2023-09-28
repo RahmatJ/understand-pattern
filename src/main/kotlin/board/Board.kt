@@ -8,7 +8,7 @@ class Board(val length: Int, val width: Int) {
     private var board: MutableList<MutableList<Cell>>
     private lateinit var pattern: Set<DataCell>
     private var visited: MutableSet<Coordinate> = mutableSetOf()
-
+    private var backTrackBucket: ArrayDeque<BackTrackItem> = ArrayDeque()
 
     init {
         board = initiateBoard()
@@ -63,12 +63,9 @@ class Board(val length: Int, val width: Int) {
 //        TODO(Rahmat): Think about how to do backtrack for this case
         if (currentCell.getCandidateId().isEmpty()) {
 //                let's reset board when we found empty element
+            println("Let's do back track")
             return true
         }
-
-//        if (currentCell.getCandidateId().size == 1 && !getVisitedCoordinate().contains(coordinate)) {
-//            addPendingCollapse(coordinate)
-//        }
 
         println(this)
         return false
@@ -122,70 +119,51 @@ class Board(val length: Int, val width: Int) {
         println("LowestEntropyCell: $arrayOfLowestEntropy")
     }
 
-    fun collapse() {
-        var shouldRecalculate = true
-        while (pendingCollapse.isNotEmpty()) {
-            val coordinate = popPendingCollapse()
-            val cell = board[coordinate.x][coordinate.y]
-            /*            TODO(Rahmat): Should we store random in somewhere else as baseline of backtrack, might be using stack
-                        store current coordinate, possible solution, visited value
-                        if all visited value,visited, then pop new level of stack
-                        if pop new, should delete also from visited array
-            */
-            val pickSingleValue: String = cell.getCandidateId().random()
-            /* in here we should push new level of stack or update the top
-               if top stack == coordinate, that means we reach contradict, and should pick other data
-            */
-            cell.setCandidateId(mutableSetOf(pickSingleValue))
+    fun collapse(coordinate: Coordinate) {
+        /*
+        TODO(Rahmat): Should we store random in somewhere else as baseline of backtrack, might be using stack
+                    store current coordinate, possible solution, visited value
+                    if all visited value,visited, then pop new level of stack
+                    if pop new, should delete also from visited array
+        */
+        val cell = board[coordinate.x][coordinate.y]
+        val pickSingleValue: String = cell.getCandidateId().random()
+        /* in here we should push new level of stack or update the top
+           if top stack == coordinate, that means we reach contradict, and should pick other data
+        */
+        val mostTopBucket  = backTrackBucket.first()
+        val backTrackItem: BackTrackItem =
+            BackTrackItem(coordinate, cell.getCandidateId(), mutableSetOf<String>(pickSingleValue))
+//        Should think about how do we do back track
+        backTrackBucket.addFirst(backTrackItem)
+
+        cell.setCandidateId(mutableSetOf(pickSingleValue))
 
 //        Get Valid Pattern
-            val dataCell: DataCell = pattern.find { it.id == pickSingleValue } ?: throw Exception("DataCell not found")
-            println("Center: ${cell.getCandidateId().elementAt(0)}")
-            var shouldReset: Boolean = false
-            println("Collapsing North... ")
-            shouldReset = collapseSurrounding(coordinate.getNorth(), dataCell.northSide)
-            if (shouldReset) {
-                println("Resetting the board !!! ")
-                resetBoard()
-                shouldRecalculate = false
-                return
-            }
-            println("Collapsing North... Done !!!")
-            println("Collapsing East...")
-            shouldReset = collapseSurrounding(coordinate.getEast(), dataCell.eastSide)
-            if (shouldReset) {
-                println("Resetting the board !!! ")
-                resetBoard()
-                shouldRecalculate = false
-                return
-            }
-            println("Collapsing East... Done !!!")
-            println("Collapsing South...")
-            shouldReset = collapseSurrounding(coordinate.getSouth(), dataCell.southSide)
-            if (shouldReset) {
-                println("Resetting the board !!! ")
-                resetBoard()
-                shouldRecalculate = false
-                return
-            }
-            println("Collapsing South... Done !!!")
-            println("Collapsing West...")
-            shouldReset = collapseSurrounding(coordinate.getWest(), dataCell.westSide)
-            if (shouldReset) {
-                println("Resetting the board !!! ")
-                resetBoard()
-                shouldRecalculate = false
-                return
-            }
-            println("Collapsing West... Done !!!")
+        val dataCell: DataCell = pattern.find { it.id == pickSingleValue } ?: throw Exception("DataCell not found")
+        println("Center: ${cell.getCandidateId().elementAt(0)}")
+        var shouldReset: Boolean = false
+        println("Collapsing North... ")
+        shouldReset = collapseSurrounding(coordinate.getNorth(), dataCell.northSide)
 
+        println("Collapsing North... Done !!!")
+        println("Collapsing East...")
+        shouldReset = collapseSurrounding(coordinate.getEast(), dataCell.eastSide)
 
-//            Add to visited
-            addVisitedCoordinate(coordinate)
-        }
-        if (shouldRecalculate) {
-            recalculateEntropy()
-        }
+        println("Collapsing East... Done !!!")
+        println("Collapsing South...")
+        shouldReset = collapseSurrounding(coordinate.getSouth(), dataCell.southSide)
+
+        println("Collapsing South... Done !!!")
+
+        println("Collapsing West...")
+        shouldReset = collapseSurrounding(coordinate.getWest(), dataCell.westSide)
+
+        println("Collapsing West... Done !!!")
+
+        addVisitedCoordinate(coordinate)
+
+        recalculateEntropy()
 
     }
 
@@ -201,11 +179,14 @@ class Board(val length: Int, val width: Int) {
                 continue
             }
 
-            addPendingCollapse(coordinate)
-            collapse()
+            collapse(coordinate)
 
             count++
         }
+    }
+
+    fun doBackTrack() {
+        val backTrackItem = backTrackBucket.removeFirst()
     }
 
     fun getResult() {
@@ -253,6 +234,12 @@ class Board(val length: Int, val width: Int) {
             return "[$x, $y]"
         }
     }
+
+    data class BackTrackItem(
+        val coordinate: Coordinate,
+        val possibleSolution: MutableSet<String>,
+        val chosenValue: MutableSet<String>,
+    )
 
     companion object {
         @JvmStatic

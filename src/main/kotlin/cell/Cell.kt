@@ -4,6 +4,7 @@ class Cell() {
 
     private var candidateId: MutableSet<String> = mutableSetOf<String>()
     private var entropy: Double = 1.0
+    private var candidateHistory: ArrayDeque<MutableSet<String>> = ArrayDeque()
 
     init {
         setCandidateId(baseCellProbability)
@@ -11,6 +12,8 @@ class Cell() {
 
     fun removeInvalidCandidate(validCandidate: MutableSet<String>) {
 //        instead of removing, try to create new array and set candidate with it
+        val removedCandidate = this.candidateId.filter { !validCandidate.contains(it) }.toMutableSet()
+        pushCandidateHistory(removedCandidate)
         val newCandidate = this.candidateId.filter { validCandidate.contains(it) }.toMutableSet()
         println(newCandidate)
         setCandidateId(newCandidate)
@@ -48,6 +51,18 @@ class Cell() {
         return result
     }
 
+    fun popCandidateHistory(): MutableSet<String> {
+        return candidateHistory.removeFirst()
+    }
+
+    fun pushCandidateHistory(candidates: MutableSet<String>){
+        candidateHistory.addFirst(candidates)
+    }
+
+    fun doBackTrack() {
+        val currentCandidateData = popCandidateHistory()
+        candidateId.addAll(currentCandidateData)
+    }
 
     companion object {
         @JvmStatic
