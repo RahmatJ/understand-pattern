@@ -51,7 +51,7 @@ class Board(val length: Int, val width: Int) {
         return this.visited
     }
 
-    fun collapseSurrounding(coordinate: Coordinate, validCandidate: MutableSet<String>): Boolean {
+    fun collapseSide(coordinate: Coordinate, validCandidate: MutableSet<String>): Boolean {
 //        Check coordinate exist
         if (!board.indices.contains(coordinate.x) || !board[1].indices.contains(coordinate.y)) {
             return false
@@ -131,7 +131,7 @@ class Board(val length: Int, val width: Int) {
         /* in here we should push new level of stack or update the top
            if top stack == coordinate, that means we reach contradict, and should pick other data
         */
-        val mostTopBucket  = backTrackBucket.first()
+        val mostTopBucket = backTrackBucket.first()
         val backTrackItem: BackTrackItem =
             BackTrackItem(coordinate, cell.getCandidateId(), mutableSetOf<String>(pickSingleValue))
 //        Should think about how do we do back track
@@ -144,20 +144,20 @@ class Board(val length: Int, val width: Int) {
         println("Center: ${cell.getCandidateId().elementAt(0)}")
         var shouldReset: Boolean = false
         println("Collapsing North... ")
-        shouldReset = collapseSurrounding(coordinate.getNorth(), dataCell.northSide)
+        shouldReset = collapseSide(coordinate.getNorth(), dataCell.northSide)
 
         println("Collapsing North... Done !!!")
         println("Collapsing East...")
-        shouldReset = collapseSurrounding(coordinate.getEast(), dataCell.eastSide)
+        shouldReset = collapseSide(coordinate.getEast(), dataCell.eastSide)
 
         println("Collapsing East... Done !!!")
         println("Collapsing South...")
-        shouldReset = collapseSurrounding(coordinate.getSouth(), dataCell.southSide)
+        shouldReset = collapseSide(coordinate.getSouth(), dataCell.southSide)
 
         println("Collapsing South... Done !!!")
 
         println("Collapsing West...")
-        shouldReset = collapseSurrounding(coordinate.getWest(), dataCell.westSide)
+        shouldReset = collapseSide(coordinate.getWest(), dataCell.westSide)
 
         println("Collapsing West... Done !!!")
 
@@ -165,6 +165,24 @@ class Board(val length: Int, val width: Int) {
 
         recalculateEntropy()
 
+    }
+
+    data class NextCollapse(val cell: Cell, val coordinate: Coordinate)
+
+    fun getNextCollapse(isBackTrack: Boolean = false): NextCollapse {
+        if (isBackTrack) {
+//            getBackTrackable coordinate
+//            reset state back track to non back track
+//            Return NextCollapse
+        }
+        val coordinate = arrayOfLowestEntropy.random()
+        arrayOfLowestEntropy.remove(coordinate)
+
+        val cell = board[coordinate.x][coordinate.y]
+        val pickSingleValue: String = cell.getCandidateId().random()
+        cell.setCandidateId(mutableSetOf(pickSingleValue))
+
+        return NextCollapse(cell = cell, coordinate = coordinate)
     }
 
     fun executeCollapse() {
@@ -186,7 +204,17 @@ class Board(val length: Int, val width: Int) {
     }
 
     fun doBackTrack() {
-        val backTrackItem = backTrackBucket.removeFirst()
+        val backTrackItem = backTrackBucket.first()
+        /*
+        TODO(Rahmat):
+            - do re fill the candidate, using cell candidate history
+            - do for each direction N,E,W,S
+            - check whether any possible candidate to choose?
+            - if no, pop the first item + recalculate entropy & put current coordinate in variable
+            - then store current coordinate to visited in the history
+            - when do randomize, at first, filter the visited nodes from available solution
+         */
+
     }
 
     fun getResult() {
